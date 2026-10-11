@@ -2,17 +2,19 @@
   import { ref } from 'vue'
   import { criarQuiz, buscarQuiz } from '../service/QuizService'
   import type { BuscarQuizResponse } from '../types/QuizTypes'
+  import QuizGame from './QuizGame.vue'
 
   const tema = ref('')
-  const uuid = ref<string | null> (null)
-  const perguntas = ref<BuscarQuizResponse | null> (null)
+  const dificuldade = ref('')
+  const uuid = ref('')
+  const quiz = ref<BuscarQuizResponse | null> (null)
   
     //função de criar quiz que chama criarQuiz do QuizService
   async function gerarQuiz() {
 
     try {
 
-      const id = await criarQuiz({tema: tema.value, quantidade: 5, dificuldade: 'misto'}) 
+      const id = await criarQuiz({tema: tema.value, quantidade: 5, dificuldade: dificuldade.value}) 
       uuid.value=id
       await esperarResposta(id)
 
@@ -27,7 +29,7 @@
         const resultado = await buscarQuiz(id)
 
         if(resultado) {
-          perguntas.value=resultado
+          quiz.value=resultado
           return
         }
 
@@ -44,29 +46,40 @@
 <template>
   <div id="janela">
 
-    <h1>ESTOU AQUI</h1>
-    <input v-model="tema" placeholder="Tema do quiz"/>
-    <button @click="gerarQuiz">Criar quiz</button>
+    <header>
 
-    <div v-if="perguntas">
+        <h1>Jogo</h1>
 
-        <div v-for="(pergunta, index) in perguntas.perguntas":key="index">
-          <h3>{{ pergunta.enunciado }}</h3>
-          <ul>
+    </header>
 
-            <li v-for="(alternativa, i) in pergunta.alternativas">
+    <main>
 
-                {{ alternativa }}
+      <div v-if = "!quiz">
+        
+        <input v-model="tema" placeholder="Tema do quiz"/>
+        Selecione uma dificuldade
+        <select v-model="dificuldade" id="dificuldade">
+          <option>Fácil</option>
+          <option>Médio</option>
+          <option>Difícil</option>
+          <option>Impossível</option>
+          <option>Mista</option>
 
-            </li>
+        </select>
+        <button @click="gerarQuiz">Criar quiz</button>
 
-          </ul>
+      </div>
+      
+      <QuizGame v-else 
+      :perguntas="quiz.perguntas"
+      :uuid='uuid'
+      />
 
-        </div>
+      
 
-    </div>
-    
-  </div>
+    </main>
+
+  </div> <!--div id janela-->
     
 </template>
 
@@ -74,11 +87,24 @@
 
 
 #janela{
-  background-color: white;
+  background-color: #444;
   display: flex;
+  flex-direction: column;
   flex:1;
   height: 100%;
   width: 100%;
+  border-radius: 12px;
+}
+
+header{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.01rem;
+    font-family: 'Rubik Marker Hatch', cursive;
+    font-weight: normal;
+    color: var(--primary-color);
+    margin: 0 0 20px 0;
 }
 
 .input {
