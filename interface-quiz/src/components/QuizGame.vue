@@ -22,27 +22,38 @@ const perguntaAtual = computed( () => props.perguntas[indice.value] )
 const respostasDoUsuario : RespostaRequest = { uuid: props.uuid, respostas:[] }
 const acertos = ref<number | null>(null)
 
+const terminou = computed(() => indice.value >= props.perguntas.length)
+const respostasEnviadas = ref(false)
+const erro = ref('')
+
 function selecionarAlternativa(alternativa: string) {
     alternativaSelecionada.value=alternativa
 }
 
 function proximaQuestao() {
-    respostasDoUsuario.respostas[indice.value] = {
+    respostasDoUsuario.respostas.push ({
         enunciado: perguntaAtual.value.enunciado, 
         resposta: alternativaSelecionada.value!
-    }
+    })
 
     indice.value++
     alternativaSelecionada.value=null
 }
 
 async function mandarRespostas() {
+    erro.value = ''
+    respostasEnviadas.value=true
 
     try {
         const response = await responderQuiz(respostasDoUsuario)
         acertos.value = response
     }
-    catch(e) {console.error(e)}
+    catch(e) {
+        console.error(e)
+        erro.value='Erro ao mandar respostas'
+        respostasEnviadas.value = false
+
+    }
 
 }
 
@@ -50,7 +61,7 @@ async function mandarRespostas() {
 
 <template>
 
-    <div v-if="perguntaAtual">
+    <div v-if="!terminou">
             <p>Pergunta {{ indice+1 }} de {{ perguntas.length }}</p>
             <h3>{{ perguntaAtual.enunciado }}</h3>
         
@@ -71,16 +82,15 @@ async function mandarRespostas() {
 
     </div>
 
+    <!--Usuario terminou todas as perguntas do quiz-->
     <div v-else>
 
-        <button @click="mandarRespostas">mandar respostas</button>
-
-    </div>
-
-    <!--Mostrar quantidade de acertos depois de enviar as respostas-->
-    <div v-if="acertos !==null">
-
-        <p>Quantidade de acertos: {{ acertos }}</p>
+        <button v-if="acertos === null" :disabled="respostasEnviadas" @click="mandarRespostas">
+            mandar respostas
+        </button>
+        
+        <p v-if="erro">{{ erro }}</p>
+        <p v-else-if="respostasEnviadas">{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
 
     </div>
 
