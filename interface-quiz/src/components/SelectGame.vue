@@ -79,17 +79,19 @@
       <div v-if = "!quiz">
         
         <input v-model="tema" placeholder="Tema do quiz"/>
-        Selecione uma dificuldade
 
+        <label for="dificuldade">Selecione uma dificuldade</label>        
         <select v-model="dificuldade" id="dificuldade">
 
-          <option>Fácil</option>
-          <option>Médio</option>
-          <option>Difícil</option>
-          <option>Impossível</option>
-          <option>Mista</option>
+          <option disabled value="">Escolha...</option>
+          <option value="Fácil">Fácil</option>
+          <option value="Médio">Médio</option>
+          <option value="Difícil">Difícil</option>
+          <option value="Impossível">Impossível</option>
+          <option value="Misto">Misto</option>
 
         </select>
+        
 
         <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
           {{carregando ? 'Gerando...' : 'Criar quiz'}}
