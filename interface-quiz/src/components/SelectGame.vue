@@ -53,6 +53,14 @@
     console.error('Quiz demorou demais ou falhou')
   }
 
+  function voltarMenu() {
+    quiz.value=null
+    uuid.value=''
+    tema.value=''
+    dificuldade.value=''
+
+  }
+
 
 
 </script>
@@ -92,6 +100,7 @@
       <QuizGame v-else 
         :perguntas="quiz.perguntas"
         :uuid='uuid'
+        @voltar-menu="voltarMenu"
       />
 
     </main>

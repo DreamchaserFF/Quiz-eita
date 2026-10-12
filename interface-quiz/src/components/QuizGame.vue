@@ -12,6 +12,8 @@ const props = defineProps < {
     perguntas: Pergunta[] 
     uuid: string
     } > ()
+
+const emit = defineEmits< { (e: 'voltarMenu'): void } > ()
     
 const indice = ref(0)
 const alternativaSelecionada = ref<string | null> (null) 
@@ -38,6 +40,12 @@ function proximaQuestao() {
 
     indice.value++
     alternativaSelecionada.value=null
+}
+
+function voltarQuestao() {
+    indice.value--
+    alternativaSelecionada.value=null
+
 }
 
 async function mandarRespostas() {
@@ -68,16 +76,19 @@ async function mandarRespostas() {
         <ul>
 
             <li v-for="alternativa in perguntaAtual.alternativas" :key="alternativa">
+
                 <button
                 :class="{marcada: alternativa === alternativaSelecionada}"
                 @click="selecionarAlternativa(alternativa)"
                 >
                 {{ alternativa }}
                 </button>
+
+                
             </li>
 
         </ul>
-
+        <button v-if="indice>=1" @click="voltarQuestao">Voltar</button>
         <button :disabled="!alternativaSelecionada" @click="proximaQuestao">Próxima</button>
 
     </div>
@@ -90,7 +101,13 @@ async function mandarRespostas() {
         </button>
         
         <p v-if="erro">{{ erro }}</p>
-        <p v-else-if="respostasEnviadas">{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
+        <div v-else-if="respostasEnviadas">
+            <p>{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
+            <button @click="emit('voltarMenu')">
+                Voltar para menu
+            </button>
+
+        </div>
 
     </div>
 
