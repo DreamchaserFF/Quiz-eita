@@ -45,6 +45,7 @@ function proximaQuestao() {
 function voltarQuestao() {
     indice.value--
     alternativaSelecionada.value=null
+    respostasDoUsuario.respostas.pop()
 
 }
 
