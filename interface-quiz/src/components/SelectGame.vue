@@ -1,73 +1,66 @@
 <script lang="ts" setup>
   import { ref } from 'vue'
-
-  interface Pergunta {
-    enunciado: string
-    alternativas: string[]
-  }
-  interface RespostaQuiz{
-    perguntas: Pergunta[]
-  }
+  import { criarQuiz, buscarQuiz } from '../service/QuizService'
+  import type { BuscarQuizResponse } from '../types/QuizTypes'
+  import QuizGame from './QuizGame.vue'
 
   const tema = ref('')
-  const uuid = ref<string | null>(null)
-  const perguntas = ref<Pergunta[] | null>(null)
+  const dificuldade = ref('')
+  const uuid = ref('')
+  const quiz = ref<BuscarQuizResponse | null> (null)
+  const carregando = ref(false)
+  const erro = ref('')
   
-
+    //função de criar quiz que chama criarQuiz do QuizService
   async function gerarQuiz() {
-    const response = await fetch('http://127.0.0.1:8000/quiz/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tema: tema.value,
-        quantidade: 5,
-        dificuldade: 'mista',
-      }),
-    })
 
-    if(!response.ok) {
-      console.error('Erro ao gerar quiz, status: ', response.status )
-      return
+    carregando.value = true
+    erro.value=''
+
+    try {
+
+      const id = await criarQuiz({tema: tema.value, quantidade: 5, dificuldade: dificuldade.value}) 
+      uuid.value=id
+      await esperarResposta(id)
+
     }
 
-    const data = await response.json()
-
-    if(data?.uuid) {
-      uuid.value = data.uuid
-      await buscarPerguntas(data.uuid)
+    catch(e) {
+      console.log(e)
+      erro.value = 'Erro ao gerar quiz, tente novamente'
     }
-    else{console.error('Erro ao gerar id')}
-    
+
+    finally{
+      carregando.value = false
+    }
+
   }
 
-  
-  async function buscarPerguntas(id: string) {
+    //função de pegar respostas que chama buscarQuiz do QuizService
+  async function esperarResposta(id: string) {
 
-    for (let i=0; i<20; i++) {
-      const response = await fetch('http://127.0.0.1:8000/quiz/question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json'},
-        body: JSON.stringify({ uuid: id }),
+      for(let i=0; i<20; i++) { //tenta chamar buscarQuiz 20 vezes
+        const resultado = await buscarQuiz(id)
 
-      })
+        if(resultado) {
+          quiz.value=resultado
+          return
+        }
 
-      if(!response.ok) {
-        console.log('Erro ao buscar perguntas: ', response.status)
-        return
+        //espera 2 segundos antes de tentar de novo
+        if(i<19) await new Promise(resolve => setTimeout(resolve, 2000))
       }
 
-      const data: RespostaQuiz | null = await response.json()
-
-      if(data?.perguntas && data.perguntas.length>0) {
-        perguntas.value = data.perguntas
-        return
-      }
-      
-      if(i<19) {await new Promise(resolve => setTimeout(resolve, 2000))}
-      
-    }
-    console.error('Quiz demorou dms ou falhou')
   }
+
+  function voltarMenu() {
+    quiz.value=null
+    uuid.value=''
+    tema.value=''
+    dificuldade.value=''
+
+  }
+
 
 
 </script>
@@ -75,12 +68,48 @@
 <template>
   <div id="janela">
 
-    <h1>ESTOU AQUI</h1>
-    <input v-model="tema" placeholder="Tema do quiz"/>
-    <button @click="gerarQuiz">Criar quiz</button>
-    <p v-if="perguntas">Perguntas: {{ perguntas }}</p>
-    
-  </div>
+    <header>
+
+        <h1>Jogo</h1>
+
+    </header>
+
+    <main>
+
+      <div v-if = "!quiz">
+        
+        <input v-model="tema" placeholder="Tema do quiz"/>
+        Selecione uma dificuldade
+
+        <select v-model="dificuldade" id="dificuldade">
+
+          <option>Fácil</option>
+          <option>Médio</option>
+          <option>Difícil</option>
+          <option>Impossível</option>
+          <option>Mista</option>
+
+        </select>
+
+        <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
+          {{carregando ? 'Gerando...' : 'Criar quiz'}}
+        </button>
+
+        <p v-if="erro">
+          {{ erro }}
+        </p>
+
+      </div>
+      
+      <QuizGame v-else 
+        :perguntas="quiz.perguntas"
+        :uuid='uuid'
+        @voltar-menu="voltarMenu"
+      />
+
+    </main>
+
+  </div> <!--div id janela-->
     
 </template>
 
@@ -88,11 +117,24 @@
 
 
 #janela{
-  background-color: white;
+  background-color: #444;
   display: flex;
+  flex-direction: column;
   flex:1;
   height: 100%;
   width: 100%;
+  border-radius: 12px;
+}
+
+header{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.01rem;
+    font-family: 'Rubik Marker Hatch', cursive;
+    font-weight: normal;
+    color: var(--primary-color);
+    margin: 0 0 20px 0;
 }
 
 .input {
