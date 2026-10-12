@@ -8,9 +8,14 @@
   const dificuldade = ref('')
   const uuid = ref('')
   const quiz = ref<BuscarQuizResponse | null> (null)
+  const carregando = ref(false)
+  const erro = ref('')
   
     //função de criar quiz que chama criarQuiz do QuizService
   async function gerarQuiz() {
+
+    carregando.value = true
+    erro.value=''
 
     try {
 
@@ -19,7 +24,16 @@
       await esperarResposta(id)
 
     }
-    catch(e) {console.error(e)}
+
+    catch(e) {
+      console.log(e)
+      erro.value = 'Erro ao gerar quiz'
+    }
+
+    finally{
+      carregando.value = false
+    }
+
   }
 
     //função de pegar respostas que chama buscarQuiz do QuizService
@@ -58,7 +72,9 @@
         
         <input v-model="tema" placeholder="Tema do quiz"/>
         Selecione uma dificuldade
+
         <select v-model="dificuldade" id="dificuldade">
+
           <option>Fácil</option>
           <option>Médio</option>
           <option>Difícil</option>
@@ -66,16 +82,17 @@
           <option>Mista</option>
 
         </select>
-        <button @click="gerarQuiz">Criar quiz</button>
+
+        <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
+          {{carregando ? 'Gerando...' : 'Criar quiz'}}
+        </button>
 
       </div>
       
       <QuizGame v-else 
-      :perguntas="quiz.perguntas"
-      :uuid='uuid'
+        :perguntas="quiz.perguntas"
+        :uuid='uuid'
       />
-
-      
 
     </main>
 
