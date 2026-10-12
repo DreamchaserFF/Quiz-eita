@@ -19,7 +19,7 @@
 
     try {
 
-      const id = await criarQuiz({tema: tema.value, quantidade: 5, dificuldade: dificuldade.value}) 
+      const id = await criarQuiz({tema: tema.value.trim(), quantidade: 5, dificuldade: dificuldade.value}) 
       uuid.value=id
       await esperarResposta(id)
 
@@ -93,7 +93,7 @@
         </select>
         
 
-        <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
+        <button :disabled="carregando || !tema.trim() || !dificuldade" @click="gerarQuiz">
           {{carregando ? 'Gerando...' : 'Criar quiz'}}
         </button>
 
