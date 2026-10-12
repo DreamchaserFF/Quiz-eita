@@ -27,7 +27,7 @@
 
     catch(e) {
       console.log(e)
-      erro.value = 'Erro ao gerar quiz'
+      erro.value = 'Erro ao gerar quiz, tente novamente'
     }
 
     finally{
@@ -38,7 +38,7 @@
 
     //função de pegar respostas que chama buscarQuiz do QuizService
   async function esperarResposta(id: string) {
-    
+
       for(let i=0; i<20; i++) { //tenta chamar buscarQuiz 20 vezes
         const resultado = await buscarQuiz(id)
 
@@ -50,7 +50,7 @@
         //espera 2 segundos antes de tentar de novo
         if(i<19) await new Promise(resolve => setTimeout(resolve, 2000))
       }
-    console.error('Quiz demorou demais ou falhou')
+
   }
 
   function voltarMenu() {
@@ -94,6 +94,10 @@
         <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
           {{carregando ? 'Gerando...' : 'Criar quiz'}}
         </button>
+
+        <p v-if="erro">
+          {{ erro }}
+        </p>
 
       </div>
       
