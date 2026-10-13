@@ -1,5 +1,6 @@
 
 import logging
+import time
 
 from typing import Any
 
@@ -25,6 +26,7 @@ async def search_context_in_redis(rag_repository: RagRepository, state: QuizStat
 
 async def retrive_context(state: QuizState) -> dict[str, Any]:
     """Busca no Redis o contexto para o próximo nó do grafo."""
+    started_at = time.perf_counter()
     try:
         redis_client = RedisClient("REDIS_URL_RAG")
         rag_repository = RagRepository(redis_client)
@@ -34,3 +36,8 @@ async def retrive_context(state: QuizState) -> dict[str, Any]:
     except Exception:
         logger.exception("Falha no node retrieve_context")
         raise
+    finally:
+        logger.info(
+            "Node retrieve_context finalizado em %.3f segundos",
+            time.perf_counter() - started_at,
+        )

@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Any
 
 from langchain_core.messages import HumanMessage
@@ -102,9 +103,9 @@ def assign_question_ids(question_set: QuestionSet) -> QuestionSet:
     return question_set
 
 
-def generate_generic_quiz(state: QuizState) -> dict[str, Any]:
+async def generate_generic_quiz(state: QuizState) -> dict[str, Any]:
     prompt = quiz_prompt_generic(state)
-    response = gemini_client.invoke(
+    response = await gemini_client.invoke(
         [HumanMessage(content=prompt)],
         structured_output=Quiz,
     )
@@ -114,7 +115,7 @@ def generate_generic_quiz(state: QuizState) -> dict[str, Any]:
 
 async def generate_contextual_quiz(state: QuizState) -> dict[str, Any]:
     question_prompt = build_question_prompt(state)
-    question_response = gemini_client.invoke(
+    question_response = await gemini_client.invoke(
         [HumanMessage(content=question_prompt)],
         structured_output=QuestionSet,
     )
@@ -134,7 +135,7 @@ async def generate_contextual_quiz(state: QuizState) -> dict[str, Any]:
         question_response,
         relevant_context,
     )
-    quiz_response = gemini_client.invoke(
+    quiz_response = await gemini_client.invoke(
         [HumanMessage(content=contextual_quiz_prompt)],
         structured_output=Quiz,
     )
@@ -143,13 +144,19 @@ async def generate_contextual_quiz(state: QuizState) -> dict[str, Any]:
 
 
 async def generate_quiz(state: QuizState) -> dict[str, Any]:
+    started_at = time.perf_counter()
     try:
         if is_contextual_flow(state):
             logger.info("Iniciando geração de quiz contextual")
             return await generate_contextual_quiz(state)
 
         logger.info("Iniciando geração de quiz genérico")
-        return generate_generic_quiz(state)
+        return await generate_generic_quiz(state)
     except Exception:
         logger.exception("Falha no node generate_quiz")
         raise
+    finally:
+        logger.info(
+            "Node generate_quiz finalizado em %.3f segundos",
+            time.perf_counter() - started_at,
+        )

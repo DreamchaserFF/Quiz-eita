@@ -1,13 +1,13 @@
 import asyncio
 
-from infra.llm.key_manager import GeminiKeyManager
+from infra.llm.key_manager import KeyManager
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 class GeminiEmbeddingClient:
     
     def __init__(self, base_model: str = "gemini-embedding-2"):
-        self.key_manager = GeminiKeyManager()
+        self.key_manager = KeyManager()
         self.base_model = base_model
 
     async def create_embedding(self, chunk_list: list[str]) -> list[list[float]]:
@@ -17,18 +17,20 @@ class GeminiEmbeddingClient:
         if not self.key_manager.keys:
             raise ValueError("Nenhuma API Key foi configurada")
 
-        keys = tuple(self.key_manager.keys)
-        starting_key = self.key_manager.current_key
         chunks = iter(enumerate(chunk_list))
         results = [[] for _ in chunk_list]
 
         async def worker(worker_index: int) -> None:
-            key_index = (starting_key + worker_index) % len(keys)
-            llm = self.create_llm(keys[key_index], self.base_model)
-
             for chunk_index, chunk in chunks:
-                for attempt in range(len(keys)):
+                for attempt in range(len(self.key_manager.keys)):
+                    lease = await self.key_manager.try_acquire()
+                    if lease is None:
+                        raise RuntimeError(
+                            "Nenhuma API Key está disponível neste momento"
+                        )
+
                     try:
+                        llm = self.create_llm(lease.value, self.base_model)
                         results[chunk_index] = await self.make_embedding(llm, chunk)
                         print(f"Worker {worker_index + 1}: chunk {chunk_index} finalizado")
                         break
@@ -41,11 +43,10 @@ class GeminiEmbeddingClient:
                         if status_code != 429:
                             raise
 
-                        if attempt == len(keys) - 1:
+                        if attempt == len(self.key_manager.keys) - 1:
                             raise Exception("Todas as API Keys foram utilizadas") from error
-
-                        key_index = (key_index + 1) % len(keys)
-                        llm = self.create_llm(keys[key_index], self.base_model)
+                    finally:
+                        await lease.release()
 
         workers = [
             asyncio.create_task(worker(worker_index))

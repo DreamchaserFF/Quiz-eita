@@ -2,6 +2,7 @@
 import logging
 import asyncio
 import multiprocessing
+import time
 from threading import Lock
 
 from typing import Any
@@ -256,9 +257,15 @@ def ensure_synchronization_process() -> None:
 
 async def synchronize_cache(state: QuizState) -> dict[str, Any]:
     """Inicia a sincronização em processo separado, se necessário."""
+    started_at = time.perf_counter()
     try:
         ensure_synchronization_process()
         return {}
     except Exception:
         logger.exception("Falha ao iniciar o processo de sincronização")
         raise
+    finally:
+        logger.info(
+            "Node synchronize_cache finalizado em %.3f segundos",
+            time.perf_counter() - started_at,
+        )
