@@ -1,4 +1,4 @@
-import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest } from '../types/QuizTypes'
+import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequest } from '../types/QuizTypes'
 
 const API_URL = 'http://127.0.0.1:8000'
 
@@ -54,10 +54,26 @@ export async function responderQuiz(request: RespostaRequest): Promise <number |
     
         })
 
-        if(!response.ok) throw new Error('Houve um erro ao registrar resposta')
+        if(!response.ok) throw new Error(`Houve um erro ao registrar resposta: ${response.status}`)
         
         const data = await response.json()
         if(data.resposta.correta==true) {acertos++}
     }
     return acertos
+}
+
+//Método para excluir um quiz usando uuid
+export async function deletarQuiz(request: DeletarRequest): Promise <boolean> {
+
+    const response = await fetch(`${API_URL}/quiz/` , {
+        method: 'DELETE',
+        headers: { 'Content-Type' : 'application/json' },
+        body: JSON.stringify(request)
+    })
+    
+    if(!response.ok) throw new Error(`Houve um erro ao excluir o quiz: ${response.status}`)
+    
+    const data = await response.json()
+    
+    return data.excluded
 }

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
   import { ref } from 'vue'
-  import { criarQuiz, buscarQuiz } from '../service/QuizService'
-  import type { BuscarQuizResponse } from '../types/QuizTypes'
+  import { criarQuiz, buscarQuiz, deletarQuiz } from '../service/QuizService'
+  import type { BuscarQuizResponse, DeletarRequest } from '../types/QuizTypes'
   import QuizGame from './QuizGame.vue'
 
   const tema = ref('')
@@ -53,7 +53,16 @@
 
   }
 
-  function voltarMenu() {
+  async function voltarMenu() {
+    const quizes: DeletarRequest = { list_uuid: [ {uuid: uuid.value} ] }
+
+    try{
+      const resultado = await deletarQuiz(quizes)
+      console.log(resultado == true ? 'quiz deletado com sucesso' : 'quiz não foi deletado')
+    }
+    catch(e) {console.error(e)}
+    
+
     quiz.value=null
     uuid.value=''
     tema.value=''
