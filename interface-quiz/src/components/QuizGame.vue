@@ -100,9 +100,12 @@ async function mandarRespostas() {
         </button>
         
         <p v-if="erro">{{ erro }}</p>
+
         <div v-else-if="respostasEnviadas">
+
             <p>{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
-            <button @click="emit('voltarMenu')">
+            
+            <button v-if="acertos !== null "@click="emit('voltarMenu')">
                 Voltar para menu
             </button>
 
