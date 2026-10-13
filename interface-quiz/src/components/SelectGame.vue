@@ -1,15 +1,142 @@
 <script lang="ts" setup>
+  import { ref } from 'vue'
+  import { criarQuiz, buscarQuiz } from '../service/QuizService'
+  import type { BuscarQuizResponse } from '../types/QuizTypes'
+  import QuizGame from './QuizGame.vue'
+
+  const tema = ref('')
+  const dificuldade = ref('')
+  const uuid = ref('')
+  const quiz = ref<BuscarQuizResponse | null> (null)
+  const carregando = ref(false)
+  const erro = ref('')
+  
+    //função de criar quiz que chama criarQuiz do QuizService
+  async function gerarQuiz() {
+
+    carregando.value = true
+    erro.value=''
+
+    try {
+
+      const id = await criarQuiz({tema: tema.value, quantidade: 5, dificuldade: dificuldade.value}) 
+      uuid.value=id
+      await esperarResposta(id)
+
+    }
+
+    catch(e) {
+      console.log(e)
+      erro.value = 'Erro ao gerar quiz, tente novamente'
+    }
+
+    finally{
+      carregando.value = false
+    }
+
+  }
+
+    //função de pegar respostas que chama buscarQuiz do QuizService
+  async function esperarResposta(id: string) {
+
+      for(let i=0; i<20; i++) { //tenta chamar buscarQuiz 20 vezes
+        const resultado = await buscarQuiz(id)
+
+        if(resultado) {
+          quiz.value=resultado
+          return
+        }
+
+        //espera 2 segundos antes de tentar de novo
+        if(i<19) await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+
+  }
+
+  function voltarMenu() {
+    quiz.value=null
+    uuid.value=''
+    tema.value=''
+    dificuldade.value=''
+
+  }
+
+
+
 </script>
 
 <template>
-    
+  <div id="janela">
 
+    <header>
+
+        <h1>Jogo</h1>
+
+    </header>
+
+    <main>
+
+      <div v-if = "!quiz">
+        
+        <input v-model="tema" placeholder="Tema do quiz"/>
+        Selecione uma dificuldade
+
+        <select v-model="dificuldade" id="dificuldade">
+
+          <option>Fácil</option>
+          <option>Médio</option>
+          <option>Difícil</option>
+          <option>Impossível</option>
+          <option>Mista</option>
+
+        </select>
+
+        <button :disabled="carregando || !tema || !dificuldade" @click="gerarQuiz">
+          {{carregando ? 'Gerando...' : 'Criar quiz'}}
+        </button>
+
+        <p v-if="erro">
+          {{ erro }}
+        </p>
+
+      </div>
+      
+      <QuizGame v-else 
+        :perguntas="quiz.perguntas"
+        :uuid='uuid'
+        @voltar-menu="voltarMenu"
+      />
+
+    </main>
+
+  </div> <!--div id janela-->
+    
 </template>
 
 <style scoped>
 
 
-/* From Uiverse.io by 0xnihilism */ 
+#janela{
+  background-color: #444;
+  display: flex;
+  flex-direction: column;
+  flex:1;
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+}
+
+header{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.01rem;
+    font-family: 'Rubik Marker Hatch', cursive;
+    font-weight: normal;
+    color: var(--primary-color);
+    margin: 0 0 20px 0;
+}
+
 .input {
   width: 100%;
   max-width: 270px;

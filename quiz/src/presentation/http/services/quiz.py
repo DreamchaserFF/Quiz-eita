@@ -1,5 +1,5 @@
 from presentation.http.utils.uuid import generate_quiz_uuid
-from presentation.http.dto.quizDTO import QuizDTO
+from presentation.http.dto.quiz_dto import QuizDTO
 from infra.repository.quiz_repository import QuizRepository
 from infra.repository.redis_client import RedisClient
 from app.graph.graph import graph
@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-redis_client = RedisClient()
+redis_client = RedisClient("REDIS_URL")
 repository = QuizRepository(redis_client)
 
 
@@ -44,8 +44,7 @@ async def process_quiz(
 ):
     try:
         logger.info("Processando quiz uuid=%s", uuid)
-        result = await asyncio.to_thread(
-            graph.invoke,
+        result = await graph.ainvoke(
             {
                 "tema": tema,
                 "quantidade": quantidade,

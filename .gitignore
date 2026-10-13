@@ -9,7 +9,9 @@ venv/
 .venv/
 
 # Environment variables
+env
 .env
+eita-rag-b1b0272909ff.json
 
 # IDE
 .vscode/
