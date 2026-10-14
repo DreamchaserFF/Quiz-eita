@@ -27,8 +27,9 @@ Os temas possuem prompts específicos para Python, Java, JavaScript, C#, filmes,
 
 ```text
 quiz-eita/
+├── .env                         # chaves do Gemini e URLs (não versionar)
+├── eita-rag-b1b0272909ff.json   # credencial local do Google Drive (não versionar)
 ├── quiz/
-│   ├── .env                         # chaves do Gemini e URL do Redis (não versionar)
 │   └── src/
 │       ├── app/
 │       │   ├── graph/               # grafo LangGraph e nós de geração
@@ -133,7 +134,7 @@ Para confirmar a instalação básica:
 Crie ou edite o arquivo:
 
 ```text
-C:\cod\Quiz-eita\quiz\.env
+C:\cod\Quiz-eita\.env
 ```
 
 Use o seguinte formato e substitua os valores pelas suas credenciais:
@@ -166,7 +167,7 @@ O valor `REDIS_URL=redis://localhost:6379/0` usa o banco lógico `0`. Também é
 
 ## Rodar o FastAPI
 
-Execute os comandos a partir da raiz `C:\cod\Quiz-eita`, depois de configurar `quiz\.env` e iniciar o Redis:
+Execute os comandos a partir da raiz `C:\cod\Quiz-eita`, depois de configurar `.env` e iniciar o Redis:
 
 ```powershell
 .\venv\Scripts\python.exe -m uvicorn presentation.http.main:app --app-dir .\quiz\src --reload
@@ -350,11 +351,65 @@ Não há uma suíte de testes no repositório neste momento. É possível valida
 
 Com Redis, chaves do Gemini e o servidor FastAPI ativos, use `/health` e os exemplos das rotas acima para fazer um teste manual completo.
 
+## Deploy com Docker e Dockploy
+
+O `Dockerfile` da raiz usa duas etapas: compila o Vue com Node.js e depois copia o `dist` para uma imagem Python que executa o FastAPI. O FastAPI serve o front e a API no mesmo endereço, na porta `8000`. Não use `--reload` no container de produção.
+
+### Testar a imagem localmente
+
+Com o Docker Desktop em execução, a partir da raiz do repositório:
+
+```powershell
+docker build -t quiz-eita:local .
+docker run --rm -p 8000:8000 `
+  -e REDIS_URL="redis://host.docker.internal:6379/0" `
+  -e REDIS_URL_RAG="redis://host.docker.internal:6379/0" `
+  -e EITA_1="sua-chave-do-gemini" `
+  quiz-eita:local
+```
+
+Abra `http://localhost:8000/` para o front e `http://localhost:8000/health` para o health check. Em uma VPS, substitua `host.docker.internal` pelo endereço ou nome do serviço Redis acessível pelo container.
+
+### Valores do recurso no Dockploy
+
+Na origem GitHub, selecione o repositório `Quiz-eita`, a branch `main`, o caminho de build `/` e o gatilho `On Push`. Na seção de build, use:
+
+| Campo | Valor |
+|---|---|
+| Build Type | `Dockerfile` |
+| Docker File | `Dockerfile` |
+| Docker Context Path | `.` (ou `/`, conforme a representação do Dockploy) |
+| Docker Build Stage | `production` |
+| Porta publicada | `8000` |
+
+O estágio `production` é o estágio final do Dockerfile. O watch path pode incluir `Dockerfile`, `requirements.txt`, `quiz/**`, `interface-quiz/**` e `.dockerignore`. Assim, um push na `main` que altere qualquer parte da aplicação dispara um novo build.
+
+### Variáveis e segredos
+
+Cadastre no ambiente do Dockploy, sem versionar valores no Git:
+
+```dotenv
+REDIS_URL=redis://usuario:senha@host:6379/0
+REDIS_URL_RAG=redis://usuario:senha@host:6379/0
+EITA_1=sua-chave-do-gemini-1
+EITA_2=sua-chave-do-gemini-2
+GOOGLE_DRIVE_FOLDER_ID=id-da-pasta
+GOOGLE_DRIVE_CREDENTIALS_NAME=/run/secrets/google-drive.json
+# somente se o front estiver em outro domínio
+CORS_ORIGINS=https://app.exemplo.com
+```
+
+`REDIS_URL` guarda os quizzes e `REDIS_URL_RAG` é usado pelo contexto de documentos; eles podem apontar para a mesma instância Redis, mas os dois nomes precisam existir no ambiente atual. Para a sincronização do Google Drive, monte a credencial JSON como um secret no caminho informado por `GOOGLE_DRIVE_CREDENTIALS_NAME`. O arquivo não deve ser copiado para a imagem nem enviado ao repositório.
+
+Se o Dockploy oferecer um domínio separado para a API, defina `VITE_API_URL` **antes do build** com a URL pública da API, por exemplo `https://api.exemplo.com`, e inclua o domínio do front em `CORS_ORIGINS`. Para o desenho de um único container, deixe `VITE_API_URL` vazia: o front usará a mesma origem automaticamente.
+
+Depois do primeiro deploy, valide `https://seu-dominio/health` e `https://seu-dominio/`. O endpoint de health confirma que o processo está ativo; a criação de quiz também depende de Redis, das chaves Gemini e, quando houver contexto documental, do Google Drive.
+
 ## Solução de problemas
 
 ### `REDIS_URL não foi configurada`
 
-Confirme que `quiz/.env` existe, contém uma linha `REDIS_URL=...` não vazia e que o processo foi iniciado com o comando da raiz do projeto. Verifique também se o Redis está em execução e acessível no host e na porta informados.
+Confirme que `.env` existe na raiz do repositório, contém uma linha `REDIS_URL=...` não vazia e que o processo foi iniciado com o comando da raiz do projeto. Verifique também se o Redis está em execução e acessível no host e na porta informados.
 
 ### Erro de importação de `presentation` ou `domain`
 
@@ -366,11 +421,11 @@ Confira os logs do Uvicorn, a conectividade com o Redis e a existência de ao me
 
 ### Limite de requisições do Gemini (`429`)
 
-O `GeminiKeyManager` alterna entre as chaves configuradas. Cadastre mais chaves válidas em `quiz/.env` se a aplicação atingir o limite de uma chave.
+O `GeminiKeyManager` alterna entre as chaves configuradas. Cadastre mais chaves válidas em `.env` se a aplicação atingir o limite de uma chave.
 
 ## Segurança e operação
 
-- mantenha `quiz/.env` fora do controle de versão;
+- mantenha `.env` e `eita-rag-b1b0272909ff.json` fora do controle de versão;
 - não registre nem compartilhe valores de `REDIS_URL` ou das chaves do Gemini;
 - em produção, use Redis com autenticação, TLS e regras de rede adequadas;
 - `--reload` é útil durante o desenvolvimento, mas deve ser desligado em produção;
