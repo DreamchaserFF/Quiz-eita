@@ -350,6 +350,60 @@ Não há uma suíte de testes no repositório neste momento. É possível valida
 
 Com Redis, chaves do Gemini e o servidor FastAPI ativos, use `/health` e os exemplos das rotas acima para fazer um teste manual completo.
 
+## Deploy com Docker e Dockploy
+
+O `Dockerfile` da raiz usa duas etapas: compila o Vue com Node.js e depois copia o `dist` para uma imagem Python que executa o FastAPI. O FastAPI serve o front e a API no mesmo endereço, na porta `8000`. Não use `--reload` no container de produção.
+
+### Testar a imagem localmente
+
+Com o Docker Desktop em execução, a partir da raiz do repositório:
+
+```powershell
+docker build -t quiz-eita:local .
+docker run --rm -p 8000:8000 `
+  -e REDIS_URL="redis://host.docker.internal:6379/0" `
+  -e REDIS_URL_RAG="redis://host.docker.internal:6379/0" `
+  -e EITA_1="sua-chave-do-gemini" `
+  quiz-eita:local
+```
+
+Abra `http://localhost:8000/` para o front e `http://localhost:8000/health` para o health check. Em uma VPS, substitua `host.docker.internal` pelo endereço ou nome do serviço Redis acessível pelo container.
+
+### Valores do recurso no Dockploy
+
+Na origem GitHub, selecione o repositório `Quiz-eita`, a branch `main`, o caminho de build `/` e o gatilho `On Push`. Na seção de build, use:
+
+| Campo | Valor |
+|---|---|
+| Build Type | `Dockerfile` |
+| Docker File | `Dockerfile` |
+| Docker Context Path | `.` (ou `/`, conforme a representação do Dockploy) |
+| Docker Build Stage | `production` |
+| Porta publicada | `8000` |
+
+O estágio `production` é o estágio final do Dockerfile. O watch path pode incluir `Dockerfile`, `requirements.txt`, `quiz/**`, `interface-quiz/**` e `.dockerignore`. Assim, um push na `main` que altere qualquer parte da aplicação dispara um novo build.
+
+### Variáveis e segredos
+
+Cadastre no ambiente do Dockploy, sem versionar valores no Git:
+
+```dotenv
+REDIS_URL=redis://usuario:senha@host:6379/0
+REDIS_URL_RAG=redis://usuario:senha@host:6379/0
+EITA_1=sua-chave-do-gemini-1
+EITA_2=sua-chave-do-gemini-2
+GOOGLE_DRIVE_FOLDER_ID=id-da-pasta
+GOOGLE_DRIVE_CREDENTIALS_NAME=/run/secrets/google-drive.json
+# somente se o front estiver em outro domínio
+CORS_ORIGINS=https://app.exemplo.com
+```
+
+`REDIS_URL` guarda os quizzes e `REDIS_URL_RAG` é usado pelo contexto de documentos; eles podem apontar para a mesma instância Redis, mas os dois nomes precisam existir no ambiente atual. Para a sincronização do Google Drive, monte a credencial JSON como um secret no caminho informado por `GOOGLE_DRIVE_CREDENTIALS_NAME`. O arquivo não deve ser copiado para a imagem nem enviado ao repositório.
+
+Se o Dockploy oferecer um domínio separado para a API, defina `VITE_API_URL` **antes do build** com a URL pública da API, por exemplo `https://api.exemplo.com`, e inclua o domínio do front em `CORS_ORIGINS`. Para o desenho de um único container, deixe `VITE_API_URL` vazia: o front usará a mesma origem automaticamente.
+
+Depois do primeiro deploy, valide `https://seu-dominio/health` e `https://seu-dominio/`. O endpoint de health confirma que o processo está ativo; a criação de quiz também depende de Redis, das chaves Gemini e, quando houver contexto documental, do Google Drive.
+
 ## Solução de problemas
 
 ### `REDIS_URL não foi configurada`
