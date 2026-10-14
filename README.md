@@ -27,8 +27,9 @@ Os temas possuem prompts específicos para Python, Java, JavaScript, C#, filmes,
 
 ```text
 quiz-eita/
+├── .env                         # chaves do Gemini e URLs (não versionar)
+├── eita-rag-b1b0272909ff.json   # credencial local do Google Drive (não versionar)
 ├── quiz/
-│   ├── .env                         # chaves do Gemini e URL do Redis (não versionar)
 │   └── src/
 │       ├── app/
 │       │   ├── graph/               # grafo LangGraph e nós de geração
@@ -133,7 +134,7 @@ Para confirmar a instalação básica:
 Crie ou edite o arquivo:
 
 ```text
-C:\cod\Quiz-eita\quiz\.env
+C:\cod\Quiz-eita\.env
 ```
 
 Use o seguinte formato e substitua os valores pelas suas credenciais:
@@ -166,7 +167,7 @@ O valor `REDIS_URL=redis://localhost:6379/0` usa o banco lógico `0`. Também é
 
 ## Rodar o FastAPI
 
-Execute os comandos a partir da raiz `C:\cod\Quiz-eita`, depois de configurar `quiz\.env` e iniciar o Redis:
+Execute os comandos a partir da raiz `C:\cod\Quiz-eita`, depois de configurar `.env` e iniciar o Redis:
 
 ```powershell
 .\venv\Scripts\python.exe -m uvicorn presentation.http.main:app --app-dir .\quiz\src --reload
@@ -408,7 +409,7 @@ Depois do primeiro deploy, valide `https://seu-dominio/health` e `https://seu-do
 
 ### `REDIS_URL não foi configurada`
 
-Confirme que `quiz/.env` existe, contém uma linha `REDIS_URL=...` não vazia e que o processo foi iniciado com o comando da raiz do projeto. Verifique também se o Redis está em execução e acessível no host e na porta informados.
+Confirme que `.env` existe na raiz do repositório, contém uma linha `REDIS_URL=...` não vazia e que o processo foi iniciado com o comando da raiz do projeto. Verifique também se o Redis está em execução e acessível no host e na porta informados.
 
 ### Erro de importação de `presentation` ou `domain`
 
@@ -420,11 +421,11 @@ Confira os logs do Uvicorn, a conectividade com o Redis e a existência de ao me
 
 ### Limite de requisições do Gemini (`429`)
 
-O `GeminiKeyManager` alterna entre as chaves configuradas. Cadastre mais chaves válidas em `quiz/.env` se a aplicação atingir o limite de uma chave.
+O `GeminiKeyManager` alterna entre as chaves configuradas. Cadastre mais chaves válidas em `.env` se a aplicação atingir o limite de uma chave.
 
 ## Segurança e operação
 
-- mantenha `quiz/.env` fora do controle de versão;
+- mantenha `.env` e `eita-rag-b1b0272909ff.json` fora do controle de versão;
 - não registre nem compartilhe valores de `REDIS_URL` ou das chaves do Gemini;
 - em produção, use Redis com autenticação, TLS e regras de rede adequadas;
 - `--reload` é útil durante o desenvolvimento, mas deve ser desligado em produção;
