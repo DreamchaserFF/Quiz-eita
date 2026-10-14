@@ -1,3 +1,16 @@
+async function garantirPermissaoMicrofone(): Promise<void> {
+  if (!window.isSecureContext) {
+    throw new Error("[ERROR] O microfone exige HTTPS ou localhost.");
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop()); 
+  } catch {
+    throw new Error("[ERROR] Permissão do microfone negada. Libere nas configurações dos eu navegador.");
+  }
+}
+
+
 export function ouvindoUsuario(lang: string = "pt-BR"): Promise<string> {
   return new Promise((resolve, reject) => {
     const Reconhecimento = window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -33,7 +46,7 @@ type ResultadoResposta = {
   respostaCorreta: string;
 };
 
-const URL_API = "http://localhost:5173/"; 
+const URL_API = "http://169.58.5.68:8000/"; 
 
 export async function enviarResposta(idQuestao: string, respostaUsuario: string,): Promise<ResultadoResposta> {
   const respostaServidor = await fetch(`${URL_API}/answer`, {
