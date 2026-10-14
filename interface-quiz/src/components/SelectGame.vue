@@ -54,13 +54,22 @@
   }
 
   async function voltarMenu() {
-    const quizes: DeletarRequest = { list_uuid: [ {uuid: uuid.value} ] }
+
+    if (!uuid.value) {
+      quiz.value = null
+      uuid.value = ''
+      tema.value = ''
+      dificuldade.value = ''
+      return
+    }
+
+    const quizes: DeletarRequest = { list_uuid: [{uuid: uuid.value}] }
 
     try{
       const resultado = await deletarQuiz(quizes)
-      console.log(resultado == true ? 'quiz deletado com sucesso' : 'quiz não foi deletado')
+      console.log(resultado ? 'quiz deletado com sucesso' : 'quiz não foi deletado')
     }
-    catch(e) {console.error(e)}
+    catch(e) {console.error('Erro ao deletar quiz', e)}
     
 
     quiz.value=null

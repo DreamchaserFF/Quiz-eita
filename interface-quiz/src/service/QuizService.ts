@@ -67,6 +67,8 @@ export async function responderQuiz(request: RespostaRequest): Promise <number |
 //Método para excluir um quiz usando uuid
 export async function deletarQuiz(request: DeletarRequest): Promise <boolean> {
 
+    if(!request?.list_uuid?.length) {return false}
+
     const response = await fetch(`${API_URL}/quiz/` , {
         method: 'DELETE',
         headers: { 'Content-Type' : 'application/json' },
