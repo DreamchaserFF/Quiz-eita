@@ -1,4 +1,4 @@
-import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequest } from '../types/QuizTypes'
+import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequest, Ranking } from '../types/QuizTypes'
 
 // Empty by default means same-origin in production. Set VITE_API_URL only
 // when the API is intentionally hosted on another origin.
@@ -80,4 +80,27 @@ export async function deletarQuiz(request: DeletarRequest): Promise <boolean> {
     const data = await response.json()
     
     return data.excluded
+}
+//Método para puxar todos os usuarios
+export async function buscarUsuarios(): Promise <Ranking>{ 
+    const response = await fetch(`${API_URL}/ranking`, {
+        method: 'GET',
+        headers: { 'Content-Type' : 'application/json' },
+    })
+
+    if(!response.ok) throw new Error(`Houve um erro ao buscar usuarios: ${response.status}`)
+    
+    const data = await response.json()
+    
+    return data
+}
+
+export async function mockadoBuscarusuarios(): Promise <Ranking>{
+    return {
+    'facil': [{nome: 'davi', pontos: 20}],
+    'medio': [{nome: 'gustavo', pontos: 30}],
+    'dificil': [{nome: 'matheus', pontos: 40}],
+    'impossivel': [{nome: 'ana', pontos: 50}],
+    'misto': [{nome: 'eduardo', pontos: 10}]
+    }
 }

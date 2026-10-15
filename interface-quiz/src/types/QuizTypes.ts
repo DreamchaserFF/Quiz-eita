@@ -30,3 +30,16 @@ export interface Deletar{
 export interface DeletarRequest{
     list_uuid: Deletar[]
 }
+
+export interface Usuario{
+    nome: string
+    pontos: number
+}
+
+export interface Ranking {
+    'facil': Usuario[]
+    'medio': Usuario[]
+    'dificil': Usuario[]
+    'impossivel': Usuario[]
+    'misto': Usuario[]
+}
