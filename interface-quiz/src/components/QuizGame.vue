@@ -2,7 +2,7 @@
 
     import { ref, computed } from 'vue'
     import { responderQuiz } from '../service/QuizService';
-    import type { Pergunta, RespostaRequest } from '../types/QuizTypes'
+    import type { Pergunta, RespostaRequest, Usuario } from '../types/QuizTypes'
     //Pergunta = { enunciado: string, alternativas: string[] }
     //RespostaRequest = { uuid: string, respostas: Resposta[] }
     //Resposta = { enunciado: string, resposta: string }
@@ -11,9 +11,10 @@
 const props = defineProps < { 
     perguntas: Pergunta[] 
     uuid: string
+    dificuldade: string
     } > ()
 
-const emit = defineEmits< { (e: 'voltarMenu'): void } > ()
+const emit = defineEmits< { (e: 'voltarMenu', usuario: Usuario): void } > ()
     
 const indice = ref(0)
 const alternativaSelecionada = ref<string | null> (null) 
@@ -23,6 +24,7 @@ const perguntaAtual = computed( () => props.perguntas[indice.value] )
 
 const respostasDoUsuario : RespostaRequest = { uuid: props.uuid, respostas:[] }
 const acertos = ref<number | null>(null)
+const nomeUsuario = ref('')
 
 const terminou = computed(() => indice.value >= props.perguntas.length)
 const respostasEnviadas = ref(false)
@@ -60,6 +62,10 @@ async function mandarRespostas() {
 
     }
 
+}
+
+function adicionarUsuario() {
+    emit('voltarMenu', {nome: nomeUsuario.value.trim(), pontos: acertos.value!})
 }
 
 </script>
@@ -105,11 +111,15 @@ async function mandarRespostas() {
 
             <p>{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
             
-            <button v-if="acertos !== null "@click="emit('voltarMenu')">
-                Voltar para menu
-            </button>
+            <div v-if="acertos !== null">
 
-        </div>
+                <input v-model="nomeUsuario" placeholder="Digite seu nome para o ranking"/>
+                <button :disabled="!nomeUsuario.trim()" @click="adicionarUsuario">
+                    Enviar e voltar para menu
+                </button>
+
+            </div>
+    </div>
 
     </div>
 

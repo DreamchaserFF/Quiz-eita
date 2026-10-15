@@ -95,6 +95,21 @@ export async function buscarUsuarios(): Promise <Ranking>{
     return data
 }
 
+//Método para adicionar um usuario com pontuação no ranking
+export async function adicionarUsuario(nome: string, pontos: number, dificuldade: string): Promise <boolean> {
+    const response = await fetch(`${API_URL}/ranking`, {
+        method: 'POST',
+        headers: { 'Content-Type' : 'application/json' },
+        body: JSON.stringify({nome, pontos, dificuldade})
+    })
+
+    if(!response.ok) throw new Error(`Houve um erro ao adicionar usuario: ${response.status}`)
+    
+    const data = await response.json()
+    
+    return data.added
+}
+
 export async function mockadoBuscarusuarios(): Promise <Ranking>{
     return {
     'facil': [{nome: 'davi', pontos: 20}],

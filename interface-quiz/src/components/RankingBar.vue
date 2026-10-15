@@ -32,7 +32,7 @@ onMounted(() => {
         
         await adicionarUsuariosAleatorios()
         await organizarLista()
-    }, 5000)
+    }, 10_000)
     
 })
 
