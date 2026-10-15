@@ -11,7 +11,9 @@ async function garantirPermissaoMicrofone(): Promise<void> {
 }
 
 
-export function ouvindoUsuario(lang: string = "pt-BR"): Promise<string> {
+export async function ouvindoUsuario(lang: string = "pt-BR"): Promise<string> {
+  await garantirPermissaoMicrofone();
+
   return new Promise((resolve, reject) => {
     const Reconhecimento = window.SpeechRecognition ?? window.webkitSpeechRecognition;
 
