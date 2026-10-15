@@ -28,10 +28,6 @@ const terminou = computed(() => indice.value >= props.perguntas.length)
 const respostasEnviadas = ref(false)
 const erro = ref('')
 
-function selecionarAlternativa(alternativa: string) {
-    alternativaSelecionada.value=alternativa
-}
-
 function proximaQuestao() {
     respostasDoUsuario.respostas.push ({
         enunciado: perguntaAtual.value.enunciado, 
@@ -72,23 +68,25 @@ async function mandarRespostas() {
 
     <div v-if="!terminou">
             <p>Pergunta {{ indice+1 }} de {{ perguntas.length }}</p>
-            <h3>{{ perguntaAtual.enunciado }}</h3>
         
-        <ul>
+            <fieldset>
 
-            <li v-for="alternativa in perguntaAtual.alternativas" :key="alternativa">
-
-                <button
-                :class="{marcada: alternativa === alternativaSelecionada}"
-                @click="selecionarAlternativa(alternativa)"
-                >
-                {{ alternativa }}
-                </button>
-
+                <legend>{{ perguntaAtual.enunciado }}</legend>
                 
-            </li>
+                <label v-for="alternativa in perguntaAtual.alternativas" :key="alternativa">
 
-        </ul>
+                    <input
+                    type="radio"
+                    name="alternativa"
+                    :value="alternativa"
+                    v-model="alternativaSelecionada"
+                    />
+                    {{ alternativa }}
+
+                </label>
+
+            </fieldset>
+
         <button v-if="indice>=1" @click="voltarQuestao">Voltar</button>
         <button :disabled="!alternativaSelecionada" @click="proximaQuestao">Próxima</button>
 
@@ -102,9 +100,12 @@ async function mandarRespostas() {
         </button>
         
         <p v-if="erro">{{ erro }}</p>
+
         <div v-else-if="respostasEnviadas">
+
             <p>{{ acertos === null ? 'Corrigindo...' : `Quantidade de acertos: ${acertos}`  }}</p>
-            <button @click="emit('voltarMenu')">
+            
+            <button v-if="acertos !== null "@click="emit('voltarMenu')">
                 Voltar para menu
             </button>
 

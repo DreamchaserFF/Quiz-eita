@@ -22,3 +22,11 @@ export interface RespostaRequest{
     uuid: string
     respostas: Resposta[]
 }
+
+export interface Deletar{
+    uuid: string
+}
+
+export interface DeletarRequest{
+    list_uuid: Deletar[]
+}
