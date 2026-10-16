@@ -4,6 +4,8 @@ from infra.repository.quiz_repository import QuizRepository
 from infra.repository.redis_client import RedisClient
 from app.graph.graph import graph
 from domain.entities.quiz import Quiz
+from domain.entities.InterpretAnswer import AnswerToInterpret
+from presentation.http.services.interpret_answer import interpret_answer
 import asyncio
 import logging
 
@@ -111,11 +113,33 @@ async def answer_quiz(
         quiz = Quiz(**data["quiz"])
         quiz_dto = QuizDTO(quiz)
 
-        return quiz_dto.get_answer(enunciado, resposta)
+        literal_answer = quiz_dto.get_answer(enunciado, resposta)
+        if literal_answer is not None:
+            return literal_answer
 
-    except Exception as e:
+        question = quiz_dto.find_question(enunciado)
+        if question is None:
+            return None
+
+        interpreted = await interpret_answer([
+            AnswerToInterpret(
+                user_response=resposta,
+                alternatives=question.alternativas,
+            )
+        ])
+        resolved_answer = interpreted.answers[0].referential_alternative
+        if resolved_answer is None:
+            logger.warning(
+                "Não foi possível relacionar a resposta à pergunta uuid=%s",
+                quiz_uuid,
+            )
+            return None
+
+        return quiz_dto.get_answer(enunciado, resolved_answer)
+
+    except Exception:
         logger.exception("Falha ao processar quiz uuid=%s", quiz_uuid)
-        await repository.fail(quiz_uuid, str(e))
+        raise
 
 
 async def status_check(quiz_uuid: str): 
