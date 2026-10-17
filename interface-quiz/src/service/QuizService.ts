@@ -1,8 +1,8 @@
-import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequest, Ranking } from '../types/QuizTypes'
+import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequest, Ranking, RespostaResponse } from '../types/QuizTypes'
 
 // Empty by default means same-origin in production. Set VITE_API_URL only
 // when the API is intentionally hosted on another origin.
-const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+const API_URL = 'http://127.0.0.1:8000'
 
 //método de gerar quiz retornando um uuid em string
 export async function criarQuiz(req: CriarQuizRequest): Promise<string> {
@@ -38,30 +38,20 @@ export async function buscarQuiz(uuid: string): Promise<BuscarQuizResponse | nul
 }
 
 //Método de enviar respostas usando uuid e uma lista de enunciados com alternatvias
-export async function responderQuiz(request: RespostaRequest): Promise <number | null> {
+export async function responderQuiz(request: RespostaRequest): Promise <RespostaResponse> {
 
-    let acertos = 0
-    const uuid = request.uuid
+    const response = await fetch(`${API_URL}/quiz/answer`, {
 
-    for(let i=0; i<request.respostas.length; i++) {
+    method: 'POST',
+    headers: { 'Content-Type' : 'application/json' },
+    body: JSON.stringify({uuid: request.uuid, enunciado: request.enunciado, resposta_usuario: request.resposta_usuario}),
+    })
 
-        const enunciado = request.respostas[i].enunciado
-        const resposta_usuario = request.respostas[i].resposta
-
-        const response = await fetch(`${API_URL}/quiz/answer`, {
-
-        method: 'POST',
-        headers: { 'Content-Type' : 'application/json' },
-        body: JSON.stringify({uuid, enunciado, resposta_usuario}),
+    if(!response.ok) throw new Error(`Houve um erro ao enviar respostas: ${response.status}`)
     
-        })
+    const data = await response.json()
 
-        if(!response.ok) throw new Error(`Houve um erro ao registrar resposta: ${response.status}`)
-        
-        const data = await response.json()
-        if(data.resposta.correta==true) {acertos++}
-    }
-    return acertos
+    return data.resposta
 }
 
 //Método para excluir um quiz usando uuid

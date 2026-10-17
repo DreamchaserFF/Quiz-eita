@@ -20,7 +20,14 @@ export interface BuscarQuizResponse {
 
 export interface RespostaRequest{
     uuid: string
-    respostas: Resposta[]
+    enunciado: string
+    resposta_usuario: string
+}
+
+export interface RespostaResponse {
+    resposta: string
+    correta: boolean
+    explicacao: string
 }
 
 export interface Deletar{
@@ -43,3 +50,12 @@ export interface Ranking {
     'impossivel': Usuario[]
     'misto': Usuario[]
 }
+
+export const EnumQuizGame = {
+    'respondendo': 'RESPONDENDO',
+    'resultado': 'RESULTADO',
+} as const
+
+export type EstadoQuiz = (typeof EnumQuizGame)[keyof typeof EnumQuizGame]
+
+
