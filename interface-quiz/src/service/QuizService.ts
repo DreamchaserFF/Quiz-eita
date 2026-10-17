@@ -2,7 +2,7 @@ import type { CriarQuizRequest, BuscarQuizResponse, RespostaRequest, DeletarRequ
 
 // Empty by default means same-origin in production. Set VITE_API_URL only
 // when the API is intentionally hosted on another origin.
-const API_URL = 'http://127.0.0.1:8000'
+const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
 //método de gerar quiz retornando um uuid em string
 export async function criarQuiz(req: CriarQuizRequest): Promise<string> {

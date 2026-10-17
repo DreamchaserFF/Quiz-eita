@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 
-    import { ref, computed, onMounted } from 'vue'
+    import { ref, computed } from 'vue'
     import { responderQuiz } from '../service/QuizService';
     import { EnumQuizGame } from '../types/QuizTypes'
     import type { Pergunta, RespostaRequest, Usuario,  EstadoQuiz, RespostaResponse} from '../types/QuizTypes'
