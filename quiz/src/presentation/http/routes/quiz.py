@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from presentation.http.schemas.quiz import (
+from presentation.http.schemas import (
     QuizCreatedResponse,
     QuizRequest,
     QuizQuestionsResponse,
