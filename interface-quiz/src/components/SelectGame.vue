@@ -1,7 +1,7 @@
 <script lang="ts" setup>
   import { ref } from 'vue'
-  import { criarQuiz, buscarQuiz, deletarQuiz } from '../service/QuizService'
-  import type { BuscarQuizResponse, DeletarRequest } from '../types/QuizTypes'
+  import { criarQuiz, buscarQuiz, deletarQuiz, adicionarUsuario } from '../service/QuizService'
+  import type { BuscarQuizResponse, DeletarRequest, Usuario } from '../types/QuizTypes'
   import QuizGame from './QuizGame.vue'
 
   const tema = ref('')
@@ -53,8 +53,15 @@
 
   }
 
-  async function voltarMenu() {
-
+  async function voltarMenu(usuario: Usuario) {
+    try{
+      const resultado = await adicionarUsuario(usuario.nome, usuario.pontos, dificuldade.value)
+      console.log(resultado ? 'usuario adicionado com sucesso' : 'usuario não foi adicionado')
+    }
+    catch(e) {
+      console.error('Erro ao adicionar usuario', e)
+    }
+    
     if (!uuid.value) {
       quiz.value = null
       uuid.value = ''
@@ -124,7 +131,8 @@
       <QuizGame v-else 
         :perguntas="quiz.perguntas"
         :uuid='uuid'
-        @voltar-menu="voltarMenu"
+        :dificuldade="dificuldade"
+        @voltar-menu= "voltarMenu"
       />
 
     </main>
